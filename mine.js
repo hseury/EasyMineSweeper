@@ -35,11 +35,41 @@ Mine.prototype = {
         this.inited = false;
         clearInterval(this.timer);
         // //绑定事件
-        // this.onmousemove();//鼠标在上面移动，触发每个格子的
+        this.onmousemove();//鼠标在上面移动，触发每个格子的
         // this.onmouseout();//鼠标移出canvas的事件。
         // this.onmousedown();
         // this.onclick();//点击方格事件
         // this.preRightMenu();//阻止右键菜单。
+    },
+
+    onmousemove:function(){
+
+        var that = this;//传入this.
+        this.ele.onmousemove = function(e){
+
+            var pos = that.getCellPos(getEventPosition(e));
+            var oldPos = that.oldPos;
+            var cellArr = that.cellArr;
+
+            if(pos.toString() == oldPos.toString()){//当前位置等于上一位置，return;
+                return;
+            }
+
+            //如果上一个位置没被打开，就把上一个位置涂白
+            if(that.checkCell(oldPos)&&(cellArr[oldPos[0]][oldPos[1]].isOpened == false && cellArr[oldPos[0]][oldPos[1]].tag == 0)){
+                that.drawCell(oldPos,1);
+            }
+
+            //如果当前位置被打开了，新地址替换旧地址，return;
+            if(that.checkCell(pos) && (cellArr[pos[0]][pos[1]].isOpened == true || cellArr[pos[0]][pos[1]].tag != 0 )){
+                that.oldPos = pos;
+                return;
+            }
+
+            that.drawCell(pos,2);
+            that.oldPos = pos;
+
+        }
     },
 
     createCells:function(){//初始化cellArr，保存每个格子的状态。
@@ -85,6 +115,14 @@ Mine.prototype = {
         }
     },
 
+    checkCell:function(pos){//检测位置有效性。
+        return this.cellArr[pos[0]] && this.cellArr[pos[0]][pos[1]] ;
+    },
+
+    getCellPos:function(coordinate){//根据像素坐标返回格子坐标。[3,5];
+        return [Math.ceil(coordinate.x/this.PANE_SIZE),Math.ceil(coordinate.y/this.PANE_SIZE)];
+    },
+
     numToImage:function (num,ele){
         if(num>999){
             num = 999;
@@ -102,4 +140,19 @@ Mine.prototype = {
         };
 
     }
+
+
+}
+
+//获取坐标：解决canvas在高分屏缩放150%之后坐标计算不准确的问题。
+//https://github.com/zbinlin/blog/blob/master/getting-mouse-position-in-canvas.md
+function getEventPosition(evt)
+{
+    var x, y;
+    var x = evt.clientX;
+    var y = evt.clientY;
+    var rect = document.getElementById('mine1').getBoundingClientRect();
+    x -= rect.left;
+    y -= rect.top;
+    return {x: x, y: y};
 }
